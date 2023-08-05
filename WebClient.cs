@@ -1,4 +1,7 @@
-﻿using System.Net;
+﻿using System;
+using System.Diagnostics;
+using System.Net;
+using System.Web;
 using System.Xml.Linq;
 
 namespace ZuxiTags
@@ -11,18 +14,22 @@ namespace ZuxiTags
 
         public string getUserByName(string name)
         {
-            return webClient.DownloadString("getuserbyname?name=" + name);
+            string aabc = webClient.DownloadString("getuserbyname?name=" + name);
+            Debug.WriteLine(aabc);
+            return aabc;
         }
-
+         
         public VRCPlayer GetVRCPlayerbyName(string name)
         {
-            return PlayerManager.GetUserFromJSON(getUserByName(name), name);
+            Debug.WriteLine(name);
+            return PlayerManager.GetUserFromJSON(getUserByName(HttpUtility.UrlEncode(name)), name);
         }
 
 
 
         public string GetUserTagByID(string id)
         {
+            Debug.WriteLine(id);
             return webClient.DownloadString("fetchtaglist?uid=" + id);
         }
         public Server()

@@ -4,14 +4,14 @@ using System.Text.RegularExpressions;
 namespace ZuxiTags
 {
 
-
     internal class Program
     {
-        public static Server _Server = new Server();
-        static LogFileMonitor _WatchCleaner = null;
-        static string LocalUser = string.Empty;
 
-        static void Main(string[] args)
+       public static Server _Server = new Server();
+        public  static LogFileMonitor _WatchCleaner = null;
+        public  static string LocalUser = string.Empty;
+
+        public static void Main(string[] args)
         {
 
             ResourceUtils.ExtractResources();
@@ -87,6 +87,7 @@ namespace ZuxiTags
 
 
         }
+
         internal static void GetLocalUserData()
         {
 
@@ -94,14 +95,15 @@ namespace ZuxiTags
 
 
 
-            if (LogFileString.Contains("[Behaviour] User Authenticated:"))
+            if (LogFileString.Contains("Authenticated:"))
             {
-                string pattern = @"(?<=\bLog\s+-\s+\[Behaviour\] User Authenticated: ).{0,64}(?=\r\n|$)";
+                //  string pattern = @"(?<=\bLog\s+-\s+\[Behaviour\] User Authenticated: ).{0,64}(?=\r\n|$)";
+                string pattern = @"Authenticated:\s+(.*?)\s+\(";
                 Match match = Regex.Match(LogFileString, pattern);
 
                 if (match.Success)
                 {
-                    string logMessage = match.Value;
+                    string logMessage = match.Groups[1].Value;
 
                     LocalUser = logMessage;
                     // Console.WriteLine("Log Message: " + logMessage);

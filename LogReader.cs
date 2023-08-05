@@ -90,7 +90,7 @@ namespace ZuxiTags
             _t.Start();
         }
 
-        private void CheckLog(object s, ElapsedEventArgs e)
+        internal void CheckLog(object s, ElapsedEventArgs e)
         {
             if (StartCheckingLog())
             {
