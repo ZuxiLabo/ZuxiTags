@@ -15,7 +15,7 @@ var monitor = new LogFileMonitor("c:\temp\app.log", "\r\n");
 monitor.OnLine += (s, e) =>
 {
     // WARNING.. this will be a different thread...
-    Console.WriteLine(e.Line);
+    LogManager.Log(e.Line);
 };
 monitor.Start();
 */
@@ -29,14 +29,14 @@ using System.Timers;
 
 namespace ZuxiTags
 {
-    public class LogFileMonitorLineEventArgs : EventArgs
+    internal class LogFileMonitorLineEventArgs : EventArgs
     {
-        public string Line { get; set; }
+        internal string Line { get; set; }
     }
 
-    public class LogFileMonitor
+    internal class LogFileMonitor
     {
-        public EventHandler<LogFileMonitorLineEventArgs> OnLine;
+        internal EventHandler<LogFileMonitorLineEventArgs> OnLine;
 
         // file path + delimiter internals
         string _path = String.Empty;
@@ -72,13 +72,13 @@ namespace ZuxiTags
                 _isCheckingLog = false;
         }
 
-        public LogFileMonitor(string path, string delimiter = "\n")
+        internal LogFileMonitor(string path, string delimiter = "\n")
         {
             _path = path;
             _delimiter = delimiter;
         }
 
-        public void Start()
+        internal void Start()
         {
             // get the current size
             _currentSize = new FileInfo(_path).Length;
@@ -154,7 +154,7 @@ namespace ZuxiTags
             }
         }
 
-        public void Stop()
+        internal void Stop()
         {
             if (_t == null)
                 return;

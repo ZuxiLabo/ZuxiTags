@@ -36,22 +36,22 @@ namespace ZuxiTags
                 {
                     // Sort files by creation time (descending) and select the first (most recent) file
                     string latestTxtFile = txtFiles.OrderByDescending(f => File.GetCreationTime(f)).First();
-                    Console.WriteLine("Latest .txt file: " + latestTxtFile);
+                    LogManager.Log("Latest .txt file: " + latestTxtFile);
 
                     LogFile = latestTxtFile;
                 }
                 else
                 {
-                    Console.WriteLine("No .txt files found in the directory.");
+                    LogManager.Log("No .txt files found in the directory.");
                 }
             }
             catch (DirectoryNotFoundException)
             {
-                Console.WriteLine("Directory not found.");
+                LogManager.Log("Directory not found.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: " + ex.Message);
+                LogManager.Log("Error: " + ex.Message);
             }
         }
 

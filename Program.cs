@@ -1,69 +1,82 @@
 ﻿using System;
+using System.Net;
 using System.Text.RegularExpressions;
-
+using ZuxiTags.VRCX.IPC;
 namespace ZuxiTags
 {
 
     internal class Program
     {
 
-       public static Server _Server = new Server();
-        public  static LogFileMonitor _WatchCleaner = null;
-        public  static string LocalUser = string.Empty;
-
-        public static void Main(string[] args)
+        internal static Server ServerCon = new Server();
+        internal static LogFileMonitor LogWatcher = null;
+        internal static string LocalUserName = string.Empty;
+        internal static string LocalUserId = string.Empty;
+        internal static string LocalUser = string.Empty;
+        internal static readonly IPCClient ipcClient = new IPCClient();
+        internal static readonly IPCClientReceive ipcClientRec = new IPCClientReceive();
+        [Zuxi.SDK.DoNotObfuscate]
+        internal static void Main(string[] args)
         {
+            ResourceUtils.RegisterAssemResolver();
+          //  ResourceUtils.ExtractResources();
+            LogManager.Log(new WebClient().DownloadString("https://zuxi.dev/projects/vrctags/startupmessage.txt"));
 
-            ResourceUtils.ExtractResources();
-
-
-            Console.WriteLine("EAC is a thing doesnt mean we cant have fun... you may request a tag in the discord => uwu.ac/discord");
-
-
-
+            ipcClient.Connect();
+            ipcClientRec.Connect();
+            // Start the receiver server
+            #region VRChatLogStuff
+           
             FileUtils.FindVRChatLatestFile();
 
 
             GetLocalUserData();
 
 
-            _WatchCleaner = new LogFileMonitor(FileUtils.LogFile, "\r\n") { };
-            _WatchCleaner.OnLine += (s, e) =>
+            LogWatcher = new LogFileMonitor(FileUtils.LogFile, "\r\n") { };
+            LogWatcher.OnLine += (s, e) =>
             {
                 OnNewLine(e.Line);
             };
-            _WatchCleaner.Start();
+            LogWatcher.Start();
             Console.ForegroundColor = ConsoleColor.Cyan;
-
+            
             Console.Title = "ZuxiTags by Zuxi ";
 
             Console.ForegroundColor = ConsoleUtils.GetNewConsoleColor();
-            Console.WriteLine("Found Local user: " + LocalUser);
+            LogManager.Log("Found Local user: " + LocalUser);
 
             Console.Title = Console.Title + " | UserName: " + LocalUser;
 
             Console.ForegroundColor = ConsoleUtils.GetNewConsoleColor();
-            Console.WriteLine("Connected To VRChat Log File Successully");
+            LogManager.Log("Connected To VRChat Log File Successully");
 
 
             Console.ForegroundColor = ConsoleUtils.GetNewConsoleColor();
-            Console.WriteLine("Fetching Local User Data...");
+            LogManager.Log("Fetching Local User Data...");
 
 
-            VRCPlayer _Player = PlayerManager.GetUserFromJSON(_Server.getUserByName(LocalUser), LocalUser);
+            // VRCPlayer _Player = PlayerManager.GetUserFromJSON(_Server.getUserByName(LocalUser), LocalUser);
+            ServerCon.GetUserTagByID(LocalUserId, LocalUser, OnLocalUserComplete);
+           
+            Console.Title = Console.Title + " | UserID: " + LocalUserId;
 
-            Console.ForegroundColor = ConsoleColor.Cyan;//ConsoleUtils.GetNewConsoleColor(); 
-            Console.WriteLine("Got Local User Successfully; \nUserName => {1} \nID => {0} \nTag=> {2} ", _Player.id, _Player.displayName, _Server.GetUserTagByID(_Player.id));
-
-            Console.WriteLine();
-
-            Console.Title = Console.Title + " | UserID: " + _Player.id;
-
-
-
-
-
+            #endregion
             Console.Read();
+        }
+
+        internal static void OnLocalUserComplete(bool success, TagData data)
+        {
+            if (success)
+            {
+                Console.ForegroundColor = ConsoleExt.GetNearestConsoleColor(data.CustomTagColor);//ConsoleUtils.GetNewConsoleColor(); 
+                LogManager.Log("Got Local User Successfully; \nUserName => {1} \nID => {0} \nTag=> {2} ", LocalUserId, LocalUserName, data.CustomRank);
+            }
+            else
+            {
+                LogManager.Log("Got Local User Successfully; \nUserName => {1} \nID => {0} \nTag=> {2} ", LocalUserId, LocalUserName, "No Tag Set!");
+            }
+            Console.WriteLine();
         }
 
 
@@ -72,16 +85,16 @@ namespace ZuxiTags
             if (line.Contains("OnPlayerJoined"))
             {
                 string PlayerName = line.Substring(61).Trim();
-
-
-                PlayerManager.OnPlayerJoined(PlayerName);
+                string UserId = GetUserIDFromJoinLog(line);
+                Program.ServerCon.GetUserTagByID(UserId, PlayerName.Replace($"({UserId})", "").Trim(), PlayerManager.OnPlayerLookupComplete);
+                
             }
 
             if (line.Contains("OnPlayerLeft"))
             {
                 string PlayerName = line.Substring(58).Trim();
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"Player Leave: {PlayerName}");
+                LogManager.Log($"Player Leave: {PlayerName}");
                 Console.ForegroundColor = ConsoleColor.Cyan;
             }
 
@@ -104,22 +117,33 @@ namespace ZuxiTags
                 if (match.Success)
                 {
                     string logMessage = match.Groups[1].Value;
+                    LocalUserName = logMessage;
+                    LocalUserId = GetUserIDFromJoinLog(LogFileString);
 
                     LocalUser = logMessage;
-                    // Console.WriteLine("Log Message: " + logMessage);
+                    // LogManager.Log("Log Message: " + logMessage);
                 }
                 else
                 {
-                    Console.WriteLine("No match found.");
+                    LogManager.Log("No match found.");
                 }
-
-
-
-
             }
         }
 
+        internal static string GetUserIDFromJoinLog(string joinlog)
+        {
+            string pattern = @"usr_[a-f0-9-]+";
+            Match match = Regex.Match(joinlog, pattern);
 
+            if (match.Success)
+            {
+                string userId = match.Value;
+                // LogManager.Log($"Extracted user ID: {userId}");
+
+                return userId;
+            }
+            return "";
+        }
 
     }
 }

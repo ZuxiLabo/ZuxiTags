@@ -5,25 +5,15 @@ namespace ZuxiTags
 {
     internal class PlayerManager
     {
-        public static void OnPlayerJoined(string anem)
+        public static void OnPlayerJoined(string VRChatId, string anem)
         {
-            VRCPlayer player = Program._Server.GetVRCPlayerbyName(anem);
-
-            if (player is null)
-            {
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("Failed to Fetch User Info for user they probably have special chars in there name :P PlayerJoined: " + anem);
-                Console.WriteLine("[OnFailedRequest] => Falling Back to attempt to get user info => " + Program._Server.GetVRCPlayerbyName(anem));
-
-
-                return;
-            }
-
-
-            string Tag = Program._Server.GetUserTagByID(player.id);
-
-            Console.ForegroundColor = ConsoleUtils.GetNewConsoleColor();
-            Console.WriteLine("Player Join: {0} id: {1} tag: {2}", anem, player.id, Tag);
+            
+        }
+        internal static void OnPlayerLookupComplete(bool success, TagData data)
+        {
+            Console.ForegroundColor = ConsoleExt.GetNearestConsoleColor(data.CustomTagColor);//ConsoleUtils.GetNewConsoleColor();
+           
+            LogManager.Log("Player: {0} ({1}) tag: {2}", data.username, data.userId, data.CustomRank);
             Console.ForegroundColor = ConsoleColor.Cyan;
         }
 

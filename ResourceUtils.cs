@@ -6,6 +6,17 @@ namespace ZuxiTags
 {
     internal class ResourceUtils
     {
+        internal static void RegisterAssemResolver() {
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, eventArgs) =>
+            {
+                if (eventArgs.Name.Contains("Newtonsoft.Json"))
+                {
+                    byte[] rawAssembly = ExtractResource("ZuxiTags.Newtonsoft.Json.dll");
+                    return Assembly.Load(rawAssembly);
+                }
+                return null;
+            };
+        }
         internal static string[] EmbededLibraryPaths = new string[1] { "ZuxiTags.Newtonsoft.Json.dll" };
         internal static void ExtractResources()
         {
@@ -20,13 +31,19 @@ namespace ZuxiTags
 
                     if (EmbededName.ToLower().Contains("json"))
                     {
-                        File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), EmbededName.Replace("ZuxiTags.", "")), rawAssembly);
-                    }
+                        try
+                        {
+                           Assembly NewtonSoft = Assembly.Load(rawAssembly);
+                            LogManager.Log($"Loaded: {NewtonSoft.FullName}");
+                            //File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(), EmbededName.Replace("ZuxiTags.", "")), rawAssembly);
+                        }
+                        catch (Exception) { }
+                        }
 
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.ToString());
+                    LogManager.Log(ex.ToString());
                 }
             }
         }
